@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - websocket-net
+
+  # pooler:
+  #   build: ./pooler
+  #   ports:
+  #     - "8080:8080"
+  #   # labels:
+  #   #   - "traefik.http.routers.pooler.rule=Host(`localhost`)"
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - websocket-net
+  #
+  # backend:
+  #   build: ./backend
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - websocket-net
+
+  # traefik:
+  #   image: traefik:v2.5
+  #   command:
+  #     - "--providers.docker=true"
+  #     - "--entrypoints.web.address=:80"
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #     - websocket-net
+
+networks:
+  websocket-net:
