@@ -17,16 +17,13 @@ const (
 	maxBackoff     = 5 * time.Second
 )
 
-// RedisBroker implements MessageBroker using Redis pub/sub
 type RedisBroker struct {
 	client *redis.Client
 }
 
-// NewRedisBroker creates a new Redis message broker
 func NewRedisBroker(addr string) (*RedisBroker, error) {
 	client := redis.NewClient(&redis.Options{Addr: addr})
 
-	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -37,17 +34,14 @@ func NewRedisBroker(addr string) (*RedisBroker, error) {
 	return &RedisBroker{client: client}, nil
 }
 
-// MarshalBinary implements encoding.BinaryMarshaler interface
 func (m Message) MarshalBinary() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// UnmarshalBinary implements encoding.BinaryUnmarshaler interface
 func (m *Message) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, m)
 }
 
-// Publish sends a message to the specified channel with retry capability
 func (b *RedisBroker) Publish(ctx context.Context, channel string, message Message) error {
 	operation := func() error {
 		return b.client.Publish(ctx, channel, message).Err()
@@ -69,11 +63,8 @@ func (b *RedisBroker) Publish(ctx context.Context, channel string, message Messa
 	})
 }
 
-// Subscribe starts listening for messages on the specified channel
 func (b *RedisBroker) Subscribe(ctx context.Context, channel string) (<-chan Message, error) {
 	pubsub := b.client.Subscribe(ctx, channel)
-
-	// Test subscription
 	_, err := pubsub.Receive(ctx)
 	if err != nil {
 		pubsub.Close()

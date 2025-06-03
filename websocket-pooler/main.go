@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/abdelmounim-dev/websocket-pooler/broker"
-	"github.com/abdelmounim-dev/websocket-pooler/server"
-	"github.com/abdelmounim-dev/websocket-pooler/websocket"
+	"github.com/wailbentafat/ws-hub/broker"
+	"github.com/wailbentafat/ws-hub/server"
+	"github.com/wailbentafat/ws-hub/websocket"
 )
 
 func main() {

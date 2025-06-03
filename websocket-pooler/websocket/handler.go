@@ -8,27 +8,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
-	"github.com/abdelmounim-dev/websocket-pooler/broker"
+	"github.com/wailbentafat/ws-hub/broker"
 )
 
-// Constants for channel names
 const (
 	BackendRequestsChannel  = "backend-requests"
 	BackendResponsesChannel = "backend-responses"
 )
 
-// Upgrader for websocket connections
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-// Handler manages websocket connections and message routing
 type Handler struct {
 	manager *ClientManager
 	broker  broker.MessageBroker
 }
 
-// NewHandler creates a new websocket handler
 func NewHandler(manager *ClientManager, broker broker.MessageBroker) *Handler {
 	return &Handler{
 		manager: manager,
@@ -36,7 +32,6 @@ func NewHandler(manager *ClientManager, broker broker.MessageBroker) *Handler {
 	}
 }
 
-// HandleWebSocket handles incoming websocket connections
 func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -44,26 +39,20 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a unique client ID
 	clientID := uuid.New().String()
 
-	// Create a new client session
 	session := NewClientSession(clientID, conn)
 
-	// Add client to manager
 	h.manager.AddClient(clientID, session)
 
-	// Configure pong handler
 	conn.SetPongHandler(func(string) error {
 		session.UpdateActivity()
 		return nil
 	})
 
-	// Create a context for this connection
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Start connection monitoring
 	go session.StartPingSender(ctx)
 	go session.StartActivityChecker(ctx, func() {
 		log.Printf("Connection timeout for client %s", clientID)
@@ -71,7 +60,6 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		cancel()
 	})
 
-	// Send client ID to client
 	if err := session.SafeWriteJSON(map[string]string{"client_id": clientID}); err != nil {
 		log.Printf("Failed to send client ID: %v", err)
 		conn.Close()
@@ -79,7 +67,6 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read messages from client
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -87,10 +74,8 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// Update activity timestamp
 		session.UpdateActivity()
 
-		// Forward message to backend
 		h.manager.IncreaseWaitGroup()
 		go func() {
 			defer h.manager.DecreaseWaitGroup()
@@ -107,11 +92,9 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	// Clean up when connection ends
 	h.manager.RemoveClient(clientID)
 }
 
-// ListenForResponses listens for messages from backend and routes them to clients
 func (h *Handler) ListenForResponses(ctx context.Context) {
 	messageChan, err := h.broker.Subscribe(ctx, BackendResponsesChannel)
 	if err != nil {

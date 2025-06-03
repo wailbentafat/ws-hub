@@ -1,4 +1,4 @@
-module github.com/abdelmounim-dev/websocket-pooler
+module github.com/wailbentafat/ws-hub
 
 go 1.23
 

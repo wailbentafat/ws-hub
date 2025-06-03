@@ -17,7 +17,6 @@ const (
 	websocketRetryDelay = 200 * time.Millisecond
 )
 
-// ClientSession represents a connected websocket client
 type ClientSession struct {
 	ID           string
 	conn         *websocket.Conn
@@ -25,7 +24,6 @@ type ClientSession struct {
 	mu           sync.Mutex
 }
 
-// NewClientSession creates a new client session
 func NewClientSession(id string, conn *websocket.Conn) *ClientSession {
 	return &ClientSession{
 		ID:           id,
@@ -34,7 +32,6 @@ func NewClientSession(id string, conn *websocket.Conn) *ClientSession {
 	}
 }
 
-// SafeWriteJSON writes data to the websocket with retry capability
 func (s *ClientSession) SafeWriteJSON(data interface{}) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -53,17 +50,14 @@ func (s *ClientSession) SafeWriteJSON(data interface{}) error {
 	})
 }
 
-// UpdateActivity updates the last activity timestamp
 func (s *ClientSession) UpdateActivity() {
 	atomic.StoreInt64(&s.lastActivity, time.Now().UnixNano())
 }
 
-// LastActivityTime returns the time of last activity
 func (s *ClientSession) LastActivityTime() time.Time {
 	return time.Unix(0, atomic.LoadInt64(&s.lastActivity))
 }
 
-// StartPingSender begins sending ping messages to keep the connection alive
 func (s *ClientSession) StartPingSender(ctx context.Context) {
 	ticker := time.NewTicker(pingInterval)
 	defer ticker.Stop()
@@ -82,7 +76,6 @@ func (s *ClientSession) StartPingSender(ctx context.Context) {
 	}
 }
 
-// StartActivityChecker monitors the connection for timeouts
 func (s *ClientSession) StartActivityChecker(ctx context.Context, onTimeout func()) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -101,7 +94,6 @@ func (s *ClientSession) StartActivityChecker(ctx context.Context, onTimeout func
 	}
 }
 
-// Close closes the websocket connection
 func (s *ClientSession) Close(code int, text string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -116,6 +108,5 @@ func (s *ClientSession) Close(code int, text string) error {
 		return err
 	}
 
-	// Close the connection regardless of whether the close message was sent
 	return s.conn.Close()
 }
