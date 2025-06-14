@@ -20,7 +20,7 @@ func main() {
     log.Println("Starting Backend Echo Service...")
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()
-    messageBroker, err := broker.NewRedisBroker("localhost:6379")
+    messageBroker, err := broker.NewRedisBroker("redis:6379")
     if err != nil {
         log.Fatalf("Failed to create Redis broker: %v", err)
     }
