@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    networks:
+      - websocket-net
+    deploy:
+      replicas: 1
+
+  backend:
+    image: wail5bentafat/ws-hub-backend
+    networks:
+      - websocket-net
+    deploy:
+      replicas: 1
+
+  traefik:
+    image: traefik:v2.11
+
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:8080"
+      - "--entrypoints.dashboard.address=:8081"
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - websocket-net
+    deploy:
+      replicas: 1
+
+  pooler:
+    image: wail5bentafat/ws-hub-pooler 
+    networks:
+      - websocket-net
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.pooler-ws.entrypoints=web"
+        - "traefik.http.routers.pooler-ws.rule=Path(`/ws`)"
+        - "traefik.http.routers.pooler-ws.service=pooler-service"
+        - "traefik.http.services.pooler-service.loadbalancer.server.port=8080"
