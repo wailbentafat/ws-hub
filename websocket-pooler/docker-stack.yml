@@ -9,15 +9,23 @@ services:
       replicas: 1
 
   backend:
-    image: wail5bentafat/ws-hub-backend
+    image: wail5bentafat/ws-hub-backend 
     networks:
       - websocket-net
     deploy:
       replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
 
   traefik:
     image: traefik:v2.11
-
     command:
       - "--api.insecure=true"
       - "--providers.docker.swarmMode=true"
@@ -40,9 +48,22 @@ services:
       - websocket-net
     deploy:
       replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.pooler-ws.entrypoints=web"
         - "traefik.http.routers.pooler-ws.rule=Path(`/ws`)"
         - "traefik.http.routers.pooler-ws.service=pooler-service"
         - "traefik.http.services.pooler-service.loadbalancer.server.port=8080"
+
+networks:
+  websocket-net:
+    driver: overlay

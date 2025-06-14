@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/wailbentafat/ws-hub/auth"
 	"github.com/wailbentafat/ws-hub/broker"
 	"github.com/wailbentafat/ws-hub/server"
 	"github.com/wailbentafat/ws-hub/websocket"
@@ -26,7 +27,7 @@ func main() {
 
 	handler := websocket.NewHandler(clientManager, messageBroker)
 
-	srv := server.NewServer(":8080", handler.HandleWebSocket)
+    srv := server.NewServer(":8080", handler.HandleWebSocket, auth.GenerateToken)
 
 	go handler.ListenForResponses(ctx)
 

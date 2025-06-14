@@ -5,6 +5,7 @@ import (
 )
 
 type Message struct {
+	Type     string      `json:"type,omitempty"` 
 	ClientID string      `json:"client_id"`
 	Data     interface{} `json:"data"`
 }

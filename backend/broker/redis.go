@@ -16,6 +16,9 @@ const (
 	initialBackoff = 100 * time.Millisecond
 	maxBackoff     = 5 * time.Second
 )
+func NewRedisBrokerFromClient(client *redis.Client) (*RedisBroker, error) {
+    return &RedisBroker{client: client}, nil
+}
 
 type RedisBroker struct {
 	client *redis.Client
@@ -102,7 +105,6 @@ func (b *RedisBroker) Subscribe(ctx context.Context, channel string) (<-chan Mes
 	return messages, nil
 }
 
-// Close cleans up resources
 func (b *RedisBroker) Close() error {
 	return b.client.Close()
 }

@@ -14,9 +14,10 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(addr string, wsHandler http.HandlerFunc) *Server {
+func NewServer(addr string, wsHandler http.HandlerFunc, tokenHandler http.HandlerFunc) *Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", wsHandler)
+	mux.HandleFunc("/get-token", tokenHandler) 
 
 	srv := &http.Server{
 		Addr:    addr,

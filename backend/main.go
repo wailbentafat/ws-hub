@@ -1,4 +1,4 @@
-
+// backend/main.go
 package main
 
 import (
@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/wailbentafat/ws-hub/backend/broker"
 )
 
@@ -17,45 +18,32 @@ const (
 )
 
 func main() {
-    log.Println("Starting Backend Echo Service...")
+    log.Println("Starting Backend Service...")
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()
-    messageBroker, err := broker.NewRedisBroker("redis:6379")
+
+    // --- Initialize Components ---
+    rdb := redis.NewClient(&redis.Options{Addr: "redis:6379"})
+    if err := rdb.Ping(ctx).Err(); err != nil {
+        log.Fatalf("Failed to connect to Redis: %v", err)
+    }
+    log.Println("Connected to Redis.")
+    
+    messageBroker, err := broker.NewRedisBrokerFromClient(rdb)
     if err != nil {
-        log.Fatalf("Failed to create Redis broker: %v", err)
+        log.Fatalf("Failed to create broker: %v", err)
     }
     defer messageBroker.Close()
-    log.Println("Connected to Redis Broker.")
-    requestsChan, err := messageBroker.Subscribe(ctx, BackendRequestsChannel)
-    if err != nil {
-        log.Fatalf("Failed to subscribe to '%s': %v", BackendRequestsChannel, err)
-    }
-    log.Printf("Subscribed to '%s' channel.", BackendRequestsChannel)
-    log.Println("Waiting for messages...")
-    for {
-        select {
-        case <-ctx.Done():
-            log.Println("Context cancelled. Shutting down service.")
-            return
-        case msg, ok := <-requestsChan:
-            if !ok {
-                log.Println("Requests channel closed. Shutting down.")
-                return
-            }
-            log.Printf("Received message for client %s: %s", msg.ClientID, msg.Data)
-            log.Printf("Echoing message back to client %s", msg.ClientID)
-            err := messageBroker.Publish(ctx, BackendResponsesChannel, msg)
-            if err != nil {
-                log.Printf("ERROR: Failed to publish echo message for client %s: %v", msg.ClientID, err)
-            }
-        }
-    }
 
+    store := NewStore(rdb)
+
+    log.Println("Starting listeners...")
+    go ListenForPresenceEvents(ctx, messageBroker, store)
+    go ListenForRequests(ctx, messageBroker, store)
+    
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
     <-sigChan
+
     log.Println("Shutdown signal received. Cleaning up.")
-	cancel()
-    
-					
 }
