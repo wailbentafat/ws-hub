@@ -15,13 +15,16 @@ This project implements a **WebSocket Pooler** architecture to solve this proble
 This design allows for the `pooler` instances to be scaled independently to handle massive connection loads, while the `backend` services can be scaled based on processing needs.
 
 ### System Diagram
-   +--------------------------+
-                 |                          |
-                 |  Clients (Web Browsers)  |
-                 |                          |
-                 +-------------+------------+
-                               | (ws://.../ws)
-                               v
+### System Diagram
+
+```text
+                     +--------------------------+
+                     |                          |
+                     |  Clients (Web Browsers)  |
+                     |                          |
+                     +-------------+------------+
+                                   | (ws://.../ws)
+                                   v
 +----------------------------------+----------------------------------+
 | Docker Swarm Cluster                                                |
 |                                                                     |
@@ -56,6 +59,7 @@ This design allows for the `pooler` instances to be scaled independently to hand
 |                  +--------------------------+                         |
 |                                                                     |
 +---------------------------------------------------------------------+
+ 
 ## Features
 * **Horizontal Scalability:** Pooler instances can be scaled on demand to handle increasing connection loads.
 * **Decoupled Architecture:** Connection management is fully separated from business logic via Redis Pub/Sub.
