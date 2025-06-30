@@ -59,7 +59,7 @@ This design allows for the `pooler` instances to be scaled independently to hand
 |                  +--------------------------+                         |
 |                                                                     |
 +---------------------------------------------------------------------+
- 
+ ```
 ## Features
 * **Horizontal Scalability:** Pooler instances can be scaled on demand to handle increasing connection loads.
 * **Decoupled Architecture:** Connection management is fully separated from business logic via Redis Pub/Sub.
